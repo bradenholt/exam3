@@ -1,10 +1,16 @@
-# clear environ
-rm(list = ls(all = TRUE))
+---
+title: "Exam3"
+author: "Holt"
+date: "7/9/2020"
+output: word_document
+---
 
-# setwd
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#setwd
 setwd("C:/Users/Braden/Documents/Data Science/Exam 3")
 
-# libraries
+# load packages
 library(rio)
 library(bit64)
 library(tidyverse)
@@ -55,61 +61,65 @@ library(wordcloud)
 library(topicmodels)
 library(readr)
 
+```
 
-# import Gini index variable
+## Questions
+1. Clear Environment
+```{r, echo = TRUE}
+rm(list=ls(all = TRUE))
+```
 
+1A/B. Load Data
+```{r, echo = TRUE}
 v10 <- get_acs(geography = "state", 
                variables = c(poverty = c("B06012_002",
-                            year = 2010&2015)))
+                            year = 2010)))
 
 v15 <- get_acs(geography = "state", 
                variables = c(poverty = c("B06012_002",
-                                         year = 2010)))
-
-# single panel dataset
+                                         year = 2015)))
 inequality_panel <- left_join(v10, v15, by = "NAME")
+```
 
-# change name
+1C. 
+```{r, echo = TRUE}
 setnames(inequality_panel,"estimate.x", 'gini')
 setnames(inequality_panel, "estimate.y", "gini")
-setnames(inequality_panel, "NAME", "state")
+```
 
-# add year
+1D. 
+```{r, echo = TRUE}
+setnames(inequality_panel, "NAME", "state")
+```
+
+1E. 
+```{r, echo = TRUE}
 inequality_panel$variable.x <- 2010
 inequality_panel$variable.y <- 2015
 setnames(inequality_panel, "variable.x", "2010", skip_absent = TRUE)
 setnames(inequality_panel, "variable.y", "2015")
+```
 
-# run head
+
+1F. 
+```{r, echo = TRUE}
 head(inequality_panel)
+```
 
-# wide format
-inequality_wide <- 
-  inequality_panel %>% 
-  pivot_wider(id_cols = c("2010","2015","GEOID.x","GEOID.y"),
-              names_from = "state",
-              values_from = "gini") 
 
-# long format
-inequality_long <- 
-  inequality_panel %>% 
-  pivot_longer(cols = )
-
-# collapse data
-inequality_collapsed <- 
-  inequality_panel %>% 
-  group_by(state, gini) %>% 
-  summarize(across(where(is.numeric), sum))
-
-# WDI package
+8. 
+```{r, echo = TRUE}
 gdp_current <- WDI(country = 'all', 
                     indicator = 'NY.GDP.DEFL.ZS',
                     start = 2006,
                     end = 2007,
                     extra = FALSE,
                     cache = NULL)
+```
 
-# Deflate GDP
+
+15. 2015 is the standard for deflation (=100) 
+```{r, echo = TRUE}
 usd.deflator <- 
   WDI(country = 'USA', 
       indicator = 'NY.GDP.DEFL.ZS',
@@ -117,38 +127,53 @@ usd.deflator <-
       end = 2015,
       extra = FALSE,
       cache = NULL)
+```
 
-# remove unnecessary stuff
-gdp_current$iso2c <- NULL
-gdp_current$country <- NULL
+10. UI, input & output; Server, functions; executable ShinyApp
 
-# gdp deflated
-gdp_deflated <- left_join(gdp_current,usd.deflator,
-                          by = c("year"))
-
-# pull PDF file
+11.
+```{r, echo = FALSE}
 armeniatext <- pdf_text(pdf = "https://pdf.usaid.gov/pdf_docs/PA00TNMG.pdf")
+```
 
-# convert to df
+
+12.
+```{r, echo = TRUE}
 armeniatext <- as.data.frame(armeniatext, stringAsFactors = FALSE)
-colnames(armeniatext)[which(names(armeniatext) == "armeniatext")] <- "text" # change column name
+colnames(armeniatext)[which(names(armeniatext) == "armeniatext")] <- "text" 
+```
 
-# tokenize
+13.
+```{r, echo = TRUE}
 armeniatext <- armeniatext %>% 
   unnest_tokens(word, text) %>%
   anti_join(stop_words)
+```
 
-# count words
+14.
+```{r, echo = TRUE}
 freq <- armeniatext %>% 
   count(word, sort = TRUE)
 
 head(freq, num = 5)
+```
 
-# hot 100 exam
+
+15.
+```{r, echo = TRUE}
 hot100exam <- "https://www.billboard.com/charts/hot-100"
 hot100exam <- read_html(hot100exam)
+```
 
-# identify nodes
+16. 
+```{r, echo = TRUE}
+body_nodes <- hot100exam %>% 
+  html_node("body") %>% 
+  html_children
+```
+
+17.
+```{r, echo = TRUE}
 body_nodes <- hot100exam %>% 
   html_node("body") %>% 
   html_children
@@ -180,4 +205,3 @@ last_week <- hot100exam %>%
 
 # put it all together
 hot100exam_df <- data.frame(rank,last_week,artist,title)
-
